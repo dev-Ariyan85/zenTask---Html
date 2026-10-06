@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ZenTask — a calm, offline-first task manager with List, Kanban & Calendar views, Focus Mode, Pomodoro, Streaks and Statistics." />
+  <title>ZenTask — Calm productivity</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%236366f1'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle'%3E%F0%9F%A7%98%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">🧘</div>
+        <div class="brand-text">
+          <strong>ZenTask</strong>
+          <span>Calm productivity</span>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav" aria-label="Main">
+        <p class="nav-label">Overview</p>
+        <button class="nav-item active" data-page="dashboard"><span class="ni">📊</span>Dashboard</button>
+        <button class="nav-item" data-page="tasks"><span class="ni">✅</span>My Tasks</button>
+
+        <p class="nav-label">Plan</p>
+        <button class="nav-item" data-page="today"><span class="ni">🌞</span>Today</button>
+        <button class="nav-item" data-page="upcoming"><span class="ni">📆</span>Upcoming</button>
+        <button class="nav-item" data-page="calendar"><span class="ni">📅</span>Calendar</button>
+        <button class="nav-item" data-page="kanban"><span class="ni">🗂️</span>Kanban</button>
+        <button class="nav-item" data-page="completed"><span class="ni">🎉</span>Completed</button>
+
+        <p class="nav-label">Organize</p>
+        <button class="nav-item" data-page="categories"><span class="ni">🏷️</span>Categories</button>
+        <button class="nav-item" data-page="focus"><span class="ni">🎯</span>Focus Mode</button>
+        <button class="nav-item" data-page="stats"><span class="ni">📈</span>Statistics</button>
+        <button class="nav-item" data-page="settings"><span class="ni">⚙️</span>Settings</button>
+      </nav>
+
+      <div class="side-card">
+        <div class="side-card-row">
+          <span class="side-ico">🔥</span>
+          <div><strong id="streakDays">0</strong><span>day streak</span></div>
+        </div>
+        <div class="side-card-row">
+          <span class="side-ico">⏱️</span>
+          <div><strong id="focusMins">0</strong><span>min focused today</span></div>
+        </div>
+        <button class="btn soft full" data-page="focus">Enter Focus Mode</button>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn only-mobile" id="menuToggle" aria-label="Open menu">☰</button>
+
+        <div class="search">
+          <span class="search-ico">🔍</span>
+          <input id="searchInput" type="search" placeholder="Search tasks, tags, notes…   (press /)" autocomplete="off" />
+        </div>
+
+        <div class="top-actions">
+          <span class="save-chip" id="saveChip">💾 Saved</span>
+          <button class="icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+          <button class="btn primary" data-action="new-task">＋ New Task</button>
+        </div>
+      </header>
+
+      <main class="view" id="view"><!-- rendered by JS --></main>
+    </div>
+  </div>
+
+  <!-- ============ TASK MODAL ============ -->
+  <div class="overlay" id="taskModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">New Task</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close">✕</button>
+      </div>
+
+      <form id="taskForm" novalidate>
+        <input type="hidden" name="id" />
+
+        <div class="fgrid">
+          <div class="field span2">
+            <label for="f-title">Task Title <b>*</b></label>
+            <input id="f-title" name="title" maxlength="140" placeholder="What needs to be done?" required />
+            <small class="err" id="titleErr" hidden>Please write a title.</small>
+          </div>
+
+          <div class="field span2">
+            <label for="f-desc">Description</label>
+            <textarea id="f-desc" name="description" rows="3" placeholder="Add a little context…"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="f-category">Category</label>
+            <div class="row-gap">
+              <select id="f-category" name="category"></select>
+              <button class="icon-btn" type="button" id="newCatBtn" title="New category">＋</button>
+            </div>
+          </div>
+
+          <div class="field" id="newCatRow" hidden>
+            <label for="f-newcat">New Category</label>
+            <div class="row-gap">
+              <input id="f-newcat" placeholder="Name" maxlength="24" />
+              <input id="f-newcatcolor" type="color" value="#6366f1" title="Colour" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-priority">Priority</label>
+            <select id="f-priority" name="priority">
+              <option value="low">🔵 Low</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="high">🟠 High</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-status">Status</label>
+            <select id="f-status" name="status">
+              <option value="todo">📥 Todo</option>
+              <option value="inprogress">🛠️ In Progress</option>
+              <option value="review">🔎 Review</option>
+              <option value="completed">✅ Completed</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-due">Due Date</label>
+            <input id="f-due" name="dueDate" type="date" />
+          </div>
+
+          <div class="field">
+            <label for="f-reminder">Reminder</label>
+            <input id="f-reminder" name="reminder" type="datetime-local" />
+          </div>
+
+          <div class="field span2">
+            <label for="f-tags">Tags <span class="hint">comma separated</span></label>
+            <input id="f-tags" name="tags" placeholder="design, deep-work, client" />
+          </div>
+
+          <div class="field span2">
+            <label>Subtasks</label>
+            <div class="subtasks" id="subtaskList"></div>
+            <div class="row-gap subtask-add">
+              <input id="subtaskInput" placeholder="Add a subtask and press Enter…" maxlength="120" />
+              <button class="btn ghost" type="button" id="addSubtaskBtn">Add</button>
+            </div>
+          </div>
+
+          <div class="field span2">
+            <label for="f-notes">Notes</label>
+            <textarea id="f-notes" name="notes" rows="2" placeholder="Anything you don't want to forget…"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button class="btn danger" type="button" id="modalDelete" data-action="delete-modal" hidden>🗑 Delete</button>
+          <span class="foot-spacer"></span>
+          <button class="btn ghost" type="button" data-close>Cancel</button>
+          <button class="btn primary" type="submit">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRM MODAL ============ -->
+  <div class="overlay" id="confirmModal" hidden>
+    <div class="modal modal-sm" role="alertdialog" aria-modal="true">
+      <div class="modal-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+      <p class="confirm-msg" id="confirmMsg"></p>
+      <div class="modal-foot">
+        <button class="btn ghost" type="button" id="confirmNo">Cancel</button>
+        <button class="btn danger" type="button" id="confirmYes">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOASTS + IMPORT ============ -->
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+
+  <script src="js/storage.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
